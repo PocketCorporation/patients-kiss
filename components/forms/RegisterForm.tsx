@@ -22,7 +22,7 @@ import { PatientFormValidation, UserFormValidation } from "@/lib/validation"
 import { useRouter } from "next/navigation"
 import { createUser } from "@/lib/actions/patient.actions"
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group"
-import { GenderOptions, Doctors, IdentificationTypes, PatientFormDefaultValues } from "@/constans"
+import { GenderOptions, Doctors, IdentificationTypes, PatientFormDefaultValues } from "@/constants"
 import { Label } from "../ui/label"
 import { SelectItem } from "../ui/select"
 import Image from "next/image"
@@ -43,13 +43,26 @@ const RegisterForm = ({user}:{user:User}) => {
     },
   })
 
-  async function onSubmit({name,email,phone}: z.infer<typeof PatientFormValidation>) {
+  async function onSubmit(values: z.infer<typeof PatientFormValidation>) {
     setIsLoading(true)
+    let formData
+    if (values.identificationDocument && values.identificationDocument.length > 0) {
+      const blobFile = new Blob([values.identificationDocument[0]], {
+        type: values.identificationDocument[0].type
+      })
+      formData = new FormData()
+      formData.append('blobFile', blobFile)
+      formData.append('fileName', values.identificationDocument[0].name)
+    }
     try{
-      const userData = {name,email,phone}
-      const user = await createUser(userData)
-      console.log(user)
-      if(user) {router.push(`/patients/${user.$id}/register`)}
+      const patientData = {
+        ...values,
+        userId: user.$id,
+        birthDate:new Date(values.birthDate),
+        identificationDocument: formData,
+      }
+      const patient = await registerPatient(patientData)
+      if(patient) router.push(`/patients/${user.$id}/new-appointment`)
     }catch(error){
       console.log(error)
     }
@@ -75,6 +88,7 @@ const RegisterForm = ({user}:{user:User}) => {
           control={form.control} 
           fieldType={FormFieldType.INPUT}
           name='name'
+          label="Full name"
           placeholder='John Doe'
           iconSrc='/assets/icons/user.svg'
           iconAlt='user'
@@ -85,7 +99,7 @@ const RegisterForm = ({user}:{user:User}) => {
           control={form.control} 
           fieldType={FormFieldType.INPUT}
           name='email'
-          label='Email'
+          label='Email address'
           placeholder='JohnDoe@zOrbital.sat'
           iconSrc='/assets/icons/email.svg'
           iconAlt='email'
@@ -105,7 +119,7 @@ const RegisterForm = ({user}:{user:User}) => {
           control={form.control} 
           fieldType={FormFieldType.DATE_PICKER}
           name='birthDate'
-          label='Date of Birth'
+          label='Date of birth'
         />
         
         <CustomFormField 
@@ -160,7 +174,7 @@ const RegisterForm = ({user}:{user:User}) => {
           control={form.control} 
           fieldType={FormFieldType.INPUT}
           name='emergencyContactName'
-          label='Emergency cCcontact name'
+          label='Emergency contact name'
           placeholder="Guardian's name"
         />
         
@@ -183,7 +197,7 @@ const RegisterForm = ({user}:{user:User}) => {
           control={form.control} 
           fieldType={FormFieldType.SELECT}
           name='primaryPhysician'
-          label='Primary Physician'
+          label='Primary physician'
           placeholder='Select a physician'
         >
           {Doctors.map(doctor=>(
@@ -207,7 +221,7 @@ const RegisterForm = ({user}:{user:User}) => {
         <CustomFormField 
           control={form.control} 
           fieldType={FormFieldType.INPUT}
-          name='InsuranceProvider'
+          name='insuranceProvider'
           label='Insurance provider'
           placeholder='BlueCross BlueShield'
         />
@@ -215,7 +229,7 @@ const RegisterForm = ({user}:{user:User}) => {
         <CustomFormField 
           control={form.control} 
           fieldType={FormFieldType.INPUT}
-          name='InsurancePolicyNumber'
+          name='insurancePolicyNumber'
           label='Insurance policy number'
           placeholder='ABC123456789'
         />
@@ -246,7 +260,7 @@ const RegisterForm = ({user}:{user:User}) => {
           control={form.control} 
           fieldType={FormFieldType.TEXTAREA}
           name='familyMedicalHistory'
-          label='Family Medical History'
+          label='Family medical history'
           placeholder='Appendectomy, Tonsilectomy'
         />
 
