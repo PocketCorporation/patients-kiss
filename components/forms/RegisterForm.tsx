@@ -20,7 +20,7 @@ import SubmitButton from "../SubmitButton"
 import { useState } from "react"
 import { PatientFormValidation, UserFormValidation } from "@/lib/validation"
 import { useRouter } from "next/navigation"
-import { createUser } from "@/lib/actions/patient.actions"
+import { createUser, registerPatient } from "@/lib/actions/patient.actions"
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group"
 import { GenderOptions, Doctors, IdentificationTypes, PatientFormDefaultValues } from "@/constants"
 import { Label } from "../ui/label"
@@ -61,6 +61,7 @@ const RegisterForm = ({user}:{user:User}) => {
         birthDate:new Date(values.birthDate),
         identificationDocument: formData,
       }
+      // @ts-ignore
       const patient = await registerPatient(patientData)
       if(patient) router.push(`/patients/${user.$id}/new-appointment`)
     }catch(error){
@@ -182,7 +183,7 @@ const RegisterForm = ({user}:{user:User}) => {
           control={form.control} 
           fieldType={FormFieldType.PHONE_INPUT}
           name='emergencyContactNumber'
-          label='Emeregency contact number'
+          label='Emergency contact number'
           placeholder='(555)123-4567'
         />
         </div>
